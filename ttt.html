@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Jualan Modern</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: "Poppins", sans-serif;
+        background: #dff7ff;
+    }
+
+    /* HEADER */
+    header {
+        background: #90E0EF;
+        padding: 20px;
+        color: white;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    /* NAVBAR (DISABLE DI AWAL) */
+    nav {
+        display: none; /* ← disembunyikan dulu */
+        justify-content: center;
+        gap: 15px;
+        background: white;
+        padding: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    nav button {
+        padding: 10px 18px;
+        border: none;
+        background: #90E0EF;
+        color: white;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    nav button:hover { transform: scale(1.05); }
+
+    .section { display: none; padding: 20px; }
+    .active { display: block; }
+
+    .input-box {
+        background: white;
+        padding: 20px;
+        border-radius: 14px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        max-width: 450px;
+        margin: auto;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+    }
+
+    .product-card {
+        background: white;
+        padding: 15px;
+        border-radius: 14px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: 0.2s;
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .product-img {
+        width: 100%;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+
+    .btn {
+        padding: 10px 14px;
+        border: none;
+        background: #00b4d8;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+
+    .rating span {
+        font-size: 22px;
+        cursor: pointer;
+        color: #ccc;
+    }
+
+    .filled { color: gold; }
+</style>
+</head>
+<body>
+
+<header>smanemaspace</header>
+
+<!-- NAVBAR (disembunyikan sampai masuk identitas) -->
+<nav id="navbar">
+    <button onclick="showSection('produk')">Daftar Produk</button>
+    <button onclick="showSection('tambah')">Tambahkan Produk</button>
+</nav>
+
+<!-- IDENTITAS USER -->
+<div id="identitas" class="section active">
+    <div class="input-box">
+        <h3>Masukkan Identitas Anda</h3>
+        <input type="text" id="username" placeholder="Nama Anda">
+        <input type="text" id="wa" placeholder="Nomor WhatsApp Anda">
+        <button class="btn" onclick="simpanIdentitas()">Masuk</button>
+    </div>
+</div>
+
+<!-- LIST PRODUK -->
+<div id="produk" class="section">
+    <h2 style="text-align:center">Daftar Produk</h2>
+    <div id="productList"></div>
+</div>
+
+<!-- TAMBAH PRODUK -->
+<div id="tambah" class="section">
+    <div class="input-box">
+        <h3>Tambah Produk</h3>
+
+        <input id="pNama" placeholder="Nama Produk">
+        <input id="pHarga" placeholder="Harga Produk">
+        
+        <label>Upload Foto Produk:</label>
+        <input type="file" id="pFoto" accept="image/*">
+
+        <textarea id="pDeskripsi" placeholder="Deskripsi"></textarea>
+
+        <button class="btn" onclick="tambahProduk()">Simpan Produk</button>
+    </div>
+</div>
+
+<script>
+// ------------------- IDENTITAS -------------------
+function simpanIdentitas() {
+    localStorage.setItem("userNama", username.value);
+    localStorage.setItem("userWA", wa.value);
+
+    if (!localStorage.getItem("produkList")) {
+        localStorage.setItem("produkList", JSON.stringify([]));
+    }
+
+    // TAMPILKAN NAVBAR SETELAH MASUK
+    document.getElementById("navbar").style.display = "flex";
+
+    // SEMBUNYIKAN HALAMAN IDENTITAS
+    document.getElementById("identitas").classList.remove("active");
+    showSection("produk");
+}
+
+// ------------------- NAVIGASI -------------------
+function showSection(id) {
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    
+    if (id === "produk") tampilkanProduk();
+}
+
+// ------------------- TAMBAH PRODUK -------------------
+function tambahProduk() {
+    let file = document.getElementById("pFoto").files[0];
+
+    if (!file) {
+        alert("Upload foto dulu!");
+        return;
+    }
+
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let produk = JSON.parse(localStorage.getItem("produkList"));
+
+        produk.push({
+            id: Date.now(),
+            nama: pNama.value,
+            harga: pHarga.value,
+            deskripsi: pDeskripsi.value,
+            foto: e.target.result,    // FOTO BASE64
+            penjual: localStorage.getItem("userNama"),
+            wa: localStorage.getItem("userWA"),
+            rating: []
+        });
+
+        localStorage.setItem("produkList", JSON.stringify(produk));
+
+        alert("Produk berhasil ditambahkan!");
+        showSection("produk");
+    };
+
+    reader.readAsDataURL(file);
+}
+
+// ------------------- TAMPIL PRODUK -------------------
+function tampilkanProduk() {
+    let produk = JSON.parse(localStorage.getItem("produkList"));
+    let list = document.getElementById("productList");
+
+    list.innerHTML = "";
+
+    produk.forEach(p => {
+        let avg = p.rating.length ? 
+            (p.rating.reduce((a,b)=>a+b)/p.rating.length).toFixed(1) : "Belum ada";
+
+        list.innerHTML += `
+        <div class="product-card">
+            <img src="${p.foto}" class="product-img" />
+            <h3>${p.nama}</h3>
+            <p><b>Harga:</b> Rp ${p.harga}</p>
+            <p>${p.deskripsi}</p>
+            <p><b>Penjual:</b> ${p.penjual}</p>
+            <p><b>Rating:</b> ${avg}</p>
+
+            <div class="rating">
+                ${[1,2,3,4,5].map(n => 
+                    `<span onclick="beriRating(${p.id}, ${n})">★</span>`
+                ).join("")}
+            </div>
+
+            <br>
+            <button class="btn" onclick="editProduk(${p.id})">Edit Produk</button>
+            <a href="https://wa.me/${p.wa}" target="_blank">
+                <button class="btn">Chat Penjual</button>
+            </a>
+        </div>`;
+    });
+}
+
+// ------------------- BERI RATING -------------------
+function beriRating(id, nilai) {
+    let produk = JSON.parse(localStorage.getItem("produkList"));
+    let item = produk.find(p => p.id === id);
+
+    item.rating.push(nilai);
+
+    localStorage.setItem("produkList", JSON.stringify(produk));
+    tampilkanProduk();
+}
+
+// ------------------- EDIT PRODUK -------------------
+function editProduk(id) {
+    let produk = JSON.parse(localStorage.getItem("produkList"));
+    let p = produk.find(x => x.id === id);
+
+    p.nama = prompt("Nama Produk:", p.nama);
+    p.harga = prompt("Harga:", p.harga);
+    p.deskripsi = prompt("Deskripsi:", p.deskripsi);
+
+    localStorage.setItem("produkList", JSON.stringify(produk));
+    tampilkanProduk();
+}
+</script>
+
+</body>
+</html>
